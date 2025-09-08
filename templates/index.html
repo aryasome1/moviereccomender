@@ -24,6 +24,23 @@
             <p>Search a title to discover similar films.</p>
         </div>
 
+        {% if top_genre_picks and top_genre_picks|length > 0 %}
+        <section class="top-genre-section">
+            <h2>Top picks by genre</h2>
+            <div class="recommendations-grid">
+                {% for pick in top_genre_picks %}
+                <div class="movie-card">
+                    {% if pick.poster_url %}
+                    <img class="poster" src="{{ pick.poster_url }}" alt="{{ pick.title }} poster" loading="lazy">
+                    {% endif %}
+                    <div class="genre-badge">{{ pick.genre }}</div>
+                    <h3>{{ pick.title }}</h3>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
         <div class="search-section">
             <div class="search-form">
                 <input type="text" id="movieInput" placeholder="Search movie title">

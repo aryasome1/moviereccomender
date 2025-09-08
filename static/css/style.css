@@ -191,6 +191,25 @@ main.container {
     font-weight: 600;
 }
 
+.top-genre-section {
+    margin-bottom: 24px;
+}
+
+.top-genre-section h2 {
+    margin-bottom: 12px;
+}
+
+.genre-badge {
+    display: inline-block;
+    font-size: 0.8rem;
+    color: #cfcfcf;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-bottom: 6px;
+}
+
 .input-movie {
     background: rgba(255,255,255,0.03);
     padding: 14px;

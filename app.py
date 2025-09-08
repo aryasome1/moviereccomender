@@ -15,6 +15,7 @@ movies_df = None
 cosine_sim = None
 tfidf = None
 tmdb_poster_cache = {}
+ratings_df_global = None
 
 # Model cache paths
 MODELS_DIR = os.path.join(os.path.dirname(__file__), 'models')
@@ -24,7 +25,7 @@ DATA_PATH = os.path.join(MODELS_DIR, 'preprocessed_data.pkl')
 
 def load_and_prepare_data():
     """Load cached models if present, else compute and cache them."""
-    global movies_df, cosine_sim, tfidf
+    global movies_df, cosine_sim, tfidf, ratings_df_global
 
     os.makedirs(MODELS_DIR, exist_ok=True)
 
@@ -47,6 +48,7 @@ def load_and_prepare_data():
         movies_df = pd.read_csv('data/movies.csv')
         ratings_df = pd.read_csv('data/ratings.csv')
         print(f"Loaded {len(movies_df)} movies and {len(ratings_df)} ratings")
+        ratings_df_global = ratings_df
     except FileNotFoundError as e:
         print(f"Dataset files not found: {e}")
         print("Using sample data instead...")
@@ -56,6 +58,7 @@ def load_and_prepare_data():
             'genres': ['Animation|Children|Comedy', 'Adventure|Children|Fantasy', 'Action|Crime|Thriller', 'Comedy|Romance', 'Adventure|Children']
         }
         movies_df = pd.DataFrame(sample_movies)
+        ratings_df_global = None
 
     tfidf = TfidfVectorizer(token_pattern=r'[A-Za-z]+', stop_words='english')
     movies_df['genres_processed'] = movies_df['genres'].str.replace('|', ' ')
@@ -222,10 +225,48 @@ def get_recommendations(title, num_recommendations=5):
     print(f"Recommendations: {[r['title'] for r in recommendations]}")
     return recommendations
 
+def get_top_movie_for_genre(genre: str):
+    """Return a dict with the top movie for a genre using ratings if available.
+
+    Fallback to the first match if no ratings.
+    """
+    global movies_df, ratings_df_global
+    if movies_df is None:
+        return None
+
+    genre_mask = movies_df['genres'].fillna('').str.contains(fr"(^|\|){re.escape(genre)}(\||$)")
+    subset = movies_df[genre_mask].copy()
+    if subset.empty:
+        return None
+
+    if ratings_df_global is not None:
+        # Compute mean rating and count, prefer higher count when similar means
+        agg = ratings_df_global.groupby('movieId')['rating'].agg(['mean', 'count']).reset_index()
+        subset = subset.merge(agg, on='movieId', how='left')
+        subset['mean'] = subset['mean'].fillna(0)
+        subset['count'] = subset['count'].fillna(0)
+        # Set a small threshold to avoid single-vote bias
+        subset = subset.sort_values(by=['mean', 'count'], ascending=[False, False])
+    # Pick the top row
+    top = subset.iloc[0]
+    title = top['title']
+    return {
+        'genre': genre,
+        'title': title,
+        'poster_url': fetch_tmdb_poster_url(title)
+    }
+
 @app.route('/')
 def home():
     """Home page"""
-    return render_template('index.html')
+    # Prepare top picks for a few genres
+    genres_to_show = ['Action', 'Comedy', 'Romance', 'Thriller']
+    top_picks = []
+    for g in genres_to_show:
+        pick = get_top_movie_for_genre(g)
+        if pick:
+            top_picks.append(pick)
+    return render_template('index.html', top_genre_picks=top_picks)
 
 @app.route('/movies')
 def get_all_movies():
