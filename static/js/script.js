@@ -132,8 +132,10 @@ function displayResults(inputMovie, recommendations) {
         const title = typeof rec === 'string' ? rec : rec.title;
         const reason = typeof rec === 'object' && rec.reason ? rec.reason : '';
         const similarity = typeof rec === 'object' && typeof rec.similarity === 'number' ? ` · similarity ${rec.similarity}` : '';
+        const posterUrl = typeof rec === 'object' && rec.poster_url ? rec.poster_url : null;
         html += `
             <div class="movie-card">
+                ${posterUrl ? `<img class="poster" src="${posterUrl}" alt="${title} poster" loading="lazy">` : ''}
                 <h3>${index + 1}. ${title}</h3>
                 ${reason ? `<div class=\"movie-meta\">${reason}${similarity}</div>` : ''}
             </div>

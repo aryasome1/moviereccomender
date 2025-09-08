@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from flask import Flask, request, jsonify, render_template
+import requests
 import re
 import os
 import pickle
@@ -13,6 +14,7 @@ app = Flask(__name__)
 movies_df = None
 cosine_sim = None
 tfidf = None
+tmdb_poster_cache = {}
 
 # Model cache paths
 MODELS_DIR = os.path.join(os.path.dirname(__file__), 'models')
@@ -74,6 +76,65 @@ def load_and_prepare_data():
 
     print("Data loaded and processed successfully!")
     print(f"Loaded {len(movies_df)} movies")
+
+def extract_title_and_year(raw_title: str):
+    """Extract a clean title and year if present in parentheses."""
+    if not isinstance(raw_title, str):
+        return '', None
+    match = re.search(r"^(.*)\s*\((\d{4})\)\s*$", raw_title)
+    if match:
+        title_only = match.group(1).strip()
+        year_only = int(match.group(2))
+        return title_only, year_only
+    return raw_title.strip(), None
+
+def fetch_tmdb_poster_url(movie_title: str) -> str | None:
+    """Fetch a poster URL from TMDB for a given movie title.
+
+    Uses an in-memory cache to avoid repeated API calls. Requires env TMDB_API_KEY.
+    """
+    global tmdb_poster_cache
+    if not movie_title:
+        return None
+
+    if movie_title in tmdb_poster_cache:
+        return tmdb_poster_cache[movie_title]
+
+    api_key = os.environ.get('TMDB_API_KEY')
+    if not api_key:
+        return None
+
+    title_only, year_only = extract_title_and_year(movie_title)
+
+    try:
+        params = {
+            'api_key': api_key,
+            'query': title_only,
+            'include_adult': 'false',
+        }
+        if year_only:
+            params['primary_release_year'] = year_only
+
+        resp = requests.get('https://api.themoviedb.org/3/search/movie', params=params, timeout=6)
+        if resp.status_code != 200:
+            tmdb_poster_cache[movie_title] = None
+            return None
+        data = resp.json() or {}
+        results = data.get('results') or []
+        if not results:
+            tmdb_poster_cache[movie_title] = None
+            return None
+        poster_path = results[0].get('poster_path')
+        if not poster_path:
+            tmdb_poster_cache[movie_title] = None
+            return None
+        # Use a reasonable size for list cards
+        poster_url = f"https://image.tmdb.org/t/p/w342{poster_path}"
+        tmdb_poster_cache[movie_title] = poster_url
+        return poster_url
+    except Exception:
+        tmdb_poster_cache[movie_title] = None
+        return None
 
 def get_recommendations(title, num_recommendations=5):
     """Get movie recommendations based on content similarity with reasons"""
@@ -154,7 +215,8 @@ def get_recommendations(title, num_recommendations=5):
         recommendations.append({
             'title': rec_title,
             'reason': reason,
-            'similarity': round(sim, 3)
+            'similarity': round(sim, 3),
+            'poster_url': fetch_tmdb_poster_url(rec_title)
         })
 
     print(f"Recommendations: {[r['title'] for r in recommendations]}")

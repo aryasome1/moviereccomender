@@ -212,6 +212,15 @@ main.container {
     transition: background 0.2s, border-color 0.2s;
 }
 
+.movie-card .poster {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    display: block;
+    background: #111;
+}
+
 .movie-card:hover {
     background: rgba(255,255,255,0.04);
     border-color: rgba(255,255,255,0.12);
