@@ -200,16 +200,31 @@ main.container {
 }
 
 .recommendations-grid {
-    display: grid;
+    display: flex;
     gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    scroll-snap-type: x mandatory;
+}
+
+.recommendations-grid::-webkit-scrollbar {
+    height: 8px;
+}
+
+.recommendations-grid::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.12);
+    border-radius: 8px;
 }
 
 .movie-card {
     background: rgba(255,255,255,0.03);
-    padding: 16px;
+    padding: 12px;
     border-radius: 12px;
     border: 1px solid rgba(255,255,255,0.06);
     transition: background 0.2s, border-color 0.2s;
+    min-width: 160px;
+    max-width: 200px;
+    scroll-snap-align: start;
 }
 
 .movie-card .poster {
@@ -229,13 +244,20 @@ main.container {
 .movie-card h3 {
     margin-bottom: 4px;
     color: #eaeaea;
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 600;
 }
 
 .movie-meta {
     font-size: 0.9rem;
     color: #b9b9b9;
+}
+
+@media (max-width: 600px) {
+    .movie-card {
+        min-width: 140px;
+        max-width: 170px;
+    }
 }
 
 .error-message {
