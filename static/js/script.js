@@ -1,9 +1,12 @@
-// Allow Enter key to submit
-document.getElementById('movieInput').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        getRecommendations();
-    }
-});
+// Allow Enter key to submit (guard if input exists)
+const inputEl = document.getElementById('movieInput');
+if (inputEl) {
+    inputEl.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            getRecommendations();
+        }
+    });
+}
 
 // Footer year
 document.addEventListener('DOMContentLoaded', () => {
@@ -13,9 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Suggestions (loaded on demand, titles hidden until search)
 let allMoviesCache = null;
-const inputEl = document.getElementById('movieInput');
 const suggestionsEl = document.getElementById('suggestions');
 
+if (inputEl && suggestionsEl) {
 inputEl.addEventListener('input', async function() {
     const query = inputEl.value.trim().toLowerCase();
     if (query.length < 2) {
@@ -58,10 +61,13 @@ inputEl.addEventListener('input', async function() {
         console.error('Error loading suggestions:', err);
     }
 });
+}
 
 document.addEventListener('click', (e) => {
-    if (!suggestionsEl.contains(e.target) && e.target !== inputEl) {
-        suggestionsEl.classList.remove('show');
+    if (suggestionsEl && inputEl) {
+        if (!suggestionsEl.contains(e.target) && e.target !== inputEl) {
+            suggestionsEl.classList.remove('show');
+        }
     }
 });
 

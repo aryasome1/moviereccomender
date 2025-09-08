@@ -9,11 +9,10 @@
 <body>
     <header class="navbar">
         <div class="nav-inner">
-            <div class="brand">Movie Recommender</div>
+            <div class="brand"><a href="/" class="nav-link" style="text-decoration:none;color:inherit">Movie Recommender</a></div>
             <nav class="nav-links">
-                <a href="#" class="nav-link">Home</a>
-                <a href="#how-it-works" class="nav-link">How it works</a>
-                <a href="#contact" class="nav-link">Contact</a>
+                <a href="/" class="nav-link">Home</a>
+                <a href="/recommendations" class="nav-link">Recommender</a>
             </nav>
         </div>
     </header>
@@ -41,17 +40,25 @@
         </section>
         {% endif %}
 
-        <div class="search-section">
-            <div class="search-form">
-                <input type="text" id="movieInput" placeholder="Search movie title">
-                <button id="recommendBtn" onclick="getRecommendations()">Search</button>
-                <div id="suggestions" class="suggestions"></div>
+        {% if genre_sections and genre_sections|length > 0 %}
+        {% for section in genre_sections %}
+        <section class="top-genre-section">
+            <h2>{{ section.genre }}</h2>
+            <div class="recommendations-grid">
+                {% for m in section.movies %}
+                <div class="movie-card">
+                    {% if m.poster_url %}
+                    <img class="poster" src="{{ m.poster_url }}" alt="{{ m.title }} poster" loading="lazy">
+                    {% endif %}
+                    <h3>{{ m.title }}</h3>
+                </div>
+                {% endfor %}
             </div>
-        </div>
+        </section>
+        {% endfor %}
+        {% endif %}
 
-        <div class="results-section" id="results">
-            <!-- Results will appear here -->
-        </div>
+        <!-- Search moved to dedicated page -->
     </main>
 
     <footer class="footer">

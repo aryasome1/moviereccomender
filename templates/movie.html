@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Recommendations • Movie Recommender</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preload" as="script" href="{{ url_for('static', filename='js/script.js') }}">
+    <script>window.IS_RECOMMENDER_PAGE = true;</script>
+    <style>
+        .navbar .nav-links a.active { color: #ffffff; }
+    </style>
+    
+    <!-- Optional: structured data for SEO could go here -->
+</head>
+<body>
+    <header class="navbar">
+        <div class="nav-inner">
+            <div class="brand"><a href="/" class="nav-link" style="text-decoration:none;color:inherit">Movie Recommender</a></div>
+            <nav class="nav-links">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/recommendations" class="nav-link active">Recommender</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="header">
+            <h1>Find Your Next Movie</h1>
+            <p>Enter a movie title to get similar recommendations.</p>
+        </div>
+
+        <div class="search-section">
+            <div class="search-form">
+                <input type="text" id="movieInput" placeholder="Search movie title">
+                <button id="recommendBtn" onclick="getRecommendations()">Search</button>
+                <div id="suggestions" class="suggestions"></div>
+            </div>
+        </div>
+
+        <div class="results-section" id="results"></div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-inner">
+            <div>© <span id="year"></span> Movie Recommender</div>
+            <div class="footer-links">
+                <a href="#privacy" class="footer-link">Privacy</a>
+                <a href="#terms" class="footer-link">Terms</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
+

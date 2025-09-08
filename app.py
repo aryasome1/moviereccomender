@@ -256,17 +256,59 @@ def get_top_movie_for_genre(genre: str):
         'poster_url': fetch_tmdb_poster_url(title)
     }
 
+def get_top_movies_for_genre(genre: str, limit: int = 10):
+    """Return a list of top movies for a genre using ratings when available.
+
+    Falls back to dataset order if ratings are not available.
+    """
+    global movies_df, ratings_df_global
+    if movies_df is None:
+        return []
+
+    genre_mask = movies_df['genres'].fillna('').str.contains(fr"(^|\|){re.escape(genre)}(\||$)")
+    subset = movies_df[genre_mask].copy()
+    if subset.empty:
+        return []
+
+    if ratings_df_global is not None:
+        agg = ratings_df_global.groupby('movieId')['rating'].agg(['mean', 'count']).reset_index()
+        subset = subset.merge(agg, on='movieId', how='left')
+        subset['mean'] = subset['mean'].fillna(0)
+        subset['count'] = subset['count'].fillna(0)
+        subset = subset.sort_values(by=['mean', 'count'], ascending=[False, False])
+
+    subset = subset.head(limit)
+    results = []
+    for _, row in subset.iterrows():
+        title = row['title']
+        results.append({
+            'title': title,
+            'poster_url': fetch_tmdb_poster_url(title)
+        })
+    return results
+
 @app.route('/')
 def home():
     """Home page"""
-    # Prepare top picks for a few genres
+    # Prepare sections: multiple movies per genre
     genres_to_show = ['Action', 'Comedy', 'Romance', 'Thriller']
-    top_picks = []
+    genre_sections = []
     for g in genres_to_show:
-        pick = get_top_movie_for_genre(g)
-        if pick:
-            top_picks.append(pick)
-    return render_template('index.html', top_genre_picks=top_picks)
+        movies = get_top_movies_for_genre(g, limit=12)
+        if movies:
+            genre_sections.append({
+                'genre': g,
+                'movies': movies
+            })
+    # Also keep single top picks for compact header strip if needed
+    top_picks = [get_top_movie_for_genre(g) for g in genres_to_show]
+    top_picks = [p for p in top_picks if p]
+    return render_template('index.html', top_genre_picks=top_picks, genre_sections=genre_sections)
+
+@app.route('/recommendations')
+def recommendations_page():
+    """Dedicated page for the recommender UI"""
+    return render_template('movie.html')
 
 @app.route('/movies')
 def get_all_movies():
